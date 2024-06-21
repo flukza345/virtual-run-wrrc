@@ -86,6 +86,7 @@ $result_runs = $conn->query($sql_runs);
             width: 80%;
             margin: 0 auto;
             padding-top: 20px;
+            max-width: 1200px;
         }
         .navbar {
             background-color: #333;
@@ -96,9 +97,9 @@ $result_runs = $conn->query($sql_runs);
             display: inline-block;
             color: white;
             text-align: center;
-            padding: 14px 20px;
+            padding: 10px 15px;
             text-decoration: none;
-            font-size: 16px;
+            font-size: 14px;
             transition: background-color 0.3s;
         }
         .navbar-item:hover {
@@ -180,8 +181,8 @@ $result_runs = $conn->query($sql_runs);
         .popup-container {
             position: fixed;
             background-color: white;
-            width: 60%;
-            max-width: 800px;
+            width: 80%;
+            max-width: 600px;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
