@@ -125,10 +125,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="navbar">
-        <a href="index.php">Home</a>
-        <a href="profile.php">Profile</a>
-        <a href="upload_run.php">Upload Run</a>
-        <a href="logout.php" style="float: right;">Logout</a>
+    <a href="javascript:history.back()" class="back-button">ย้อนกลับ</a>
     </div>
     <div class="container">
         <h1>Upload Run</h1>

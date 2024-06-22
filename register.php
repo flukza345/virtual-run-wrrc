@@ -101,18 +101,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="navbar">
-        <a href="index.php">Home</a>
-        <a href="register.php">Register</a>
+        <a href="index.php">หน้าแรก</a>
     </div>
     <div class="container">
-        <h1>Register</h1>
+        <h1>ลงทะเบียน</h1>
         <form method="post" action="" enctype="multipart/form-data">
-            Username: <input type="text" name="username" required><br>
-            Name: <input type="text" name="name" required><br> <!-- เพิ่มฟิลด์ 'name' -->
-            Password: <input type="password" name="password" required><br>
-            Confirm Password: <input type="password" name="confirm_password" required><br>
-            Profile Image: <input type="file" name="profile_image" required><br>
-            <input type="submit" value="Register">
+            ชื่อ: <input type="text" name="name" required><br> <!-- เพิ่มฟิลด์ 'name' -->
+            ชื่อผู้ใช้: <input type="text" name="username" required><br>
+            รหัสผ่าน: <input type="password" name="password" required><br>
+            ยืนยันรหัสผ่าน: <input type="password" name="confirm_password" required><br>
+            รูปภาพ: <input type="file" name="profile_image"><br>
+            <input type="submit" value="ลงทะเบียน">
         </form>
     </div>
 </body>

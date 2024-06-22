@@ -35,11 +35,11 @@ if (isset($_SESSION['user_id'])) {
         $navbar_links .= '<a href="admin_panel.php" class="navbar-item">Admin Panel</a>';
     }
     $navbar_links .= '<a href="upload_run.php" class="navbar-item">ส่งผลการวิ่ง</a>';
-    $logout_button = '<a href="logout.php" class="navbar-item">Logout</a>';
+    $logout_button = '<a href="logout.php" class="navbar-item">ออกจากระบบ</a>';
 } else {
-    $navbar_links = '<a href="profile.php" class="navbar-item">Home</a>';
-    $navbar_links .= '<a href="register.php" class="navbar-item">Register</a>'; // เพิ่มลิงก์สำหรับ Register
-    $logout_button = '<a href="javascript:void(0)" onclick="document.getElementById(\'loginModal\').style.display=\'block\'" class="navbar-item">Login</a>';
+    $navbar_links = '<a href="profile.php" class="navbar-item">หน้าแรก</a>';
+    $navbar_links .= '<a href="register.php" class="navbar-item">ลงทะเบียน</a>'; // เพิ่มลิงก์สำหรับ Register
+    $logout_button = '<a href="javascript:void(0)" onclick="document.getElementById(\'loginModal\').style.display=\'block\'" class="navbar-item">เข้าสู่ระบบ</a>';
 }
 ?>
 
@@ -241,9 +241,9 @@ if (isset($_SESSION['user_id'])) {
         <table>
             <thead>
                 <tr>
-                    <th>Rank</th>
-                    <th>Profile</th>
-                    <th>Total Distance (km)</th>
+                    <th>อันดับ</th>
+                    <th>ผู้เข้าร่วม</th>
+                    <th>ระยะสะสม (กิโลเมตร)</th>
                 </tr>
             </thead>
             <tbody>
@@ -266,11 +266,11 @@ if (isset($_SESSION['user_id'])) {
         <div class="modal-content">
             <span class="close" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
             <form method="post" action="login.php">
-                <label for="username">Username:</label>
+                <label for="username">ชื่อผู้ใช้:</label>
                 <input type="text" id="username" name="username" required>
-                <label for="password">Password:</label>
+                <label for="password">รหัสผ่าน:</label>
                 <input type="password" id="password" name="password" required>
-                <input type="submit" value="Login">
+                <input type="submit" value="เข้าสู่ระบบ">
             </form>
         </div>
     </div>

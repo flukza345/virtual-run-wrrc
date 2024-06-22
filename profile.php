@@ -28,7 +28,7 @@ if (isset($_SESSION['user_id'])) {
     $stmt_total_distance->close();
     
     // Fetch user's running history and approval status
-    $sql_runs = "SELECT id, distance, run_date, image_path, approved FROM runs WHERE user_id = ?";
+    $sql_runs = "SELECT id, distance, run_date, image_path, approved, created_at FROM runs WHERE user_id = ? ORDER BY created_at DESC";
     $stmt_runs = $conn->prepare($sql_runs);
     $stmt_runs->bind_param("i", $user_id);
     $stmt_runs->execute();
@@ -230,10 +230,11 @@ if (isset($_SESSION['user_id'])) {
             <div class="bar"></div>
         </div>
         <div class="menu-items" id="menuItems">
-            <a href="index.php" class="navbar-item">Home</a>
+            <a href="index.php" class="navbar-item">หน้าแรก</a>
             <a href="profile.php" class="navbar-item"><img src="uploads/profiles/<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image" class="profile"> <?php echo htmlspecialchars($username); ?></a>
-            <a href="upload_run.php" class="navbar-item">Upload Run</a>
-            <a href="logout.php" class="navbar-item">Logout</a>
+            <a href="update_profile.php" class="navbar-item">เปลี่ยนรูปโปรไฟล์</a>
+            <a href="upload_run.php" class="navbar-item">ส่งผลการวิ่ง</a>
+            <a href="logout.php" class="navbar-item">ออกจากระบบ</a>
         </div>
     </div>
     <div class="container">
@@ -267,7 +268,7 @@ if (isset($_SESSION['user_id'])) {
                 <?php
                 while ($row = $result_runs->fetch_assoc()) {
                     echo "<tr>";
-                    echo "<td>" . htmlspecialchars($row['run_date']) . "</td>";
+                    echo "<td>" . htmlspecialchars(date('Y-m-d H:i:s', strtotime($row['created_at']))) . "</td>";
                     echo "<td>" . htmlspecialchars($row['distance']) . "</td>";
                     // Show image in a popup
                     echo "<td><button onclick=\"showImagePopup('" . htmlspecialchars($row['image_path']) . "')\">View Image</button></td>";
