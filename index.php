@@ -237,7 +237,7 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </div>
     <div class="container">
-        <h1>Running Dashboard</h1>
+        <h1>เดินวิ่งกลิ้งคลาน วิ่งสะสมระยะ ครั้งที่1</h1>
         <table>
             <thead>
                 <tr>
