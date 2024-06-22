@@ -38,6 +38,7 @@ if (isset($_SESSION['user_id'])) {
     $logout_button = '<a href="logout.php" class="navbar-item">Logout</a>';
 } else {
     $navbar_links = '<a href="profile.php" class="navbar-item">Home</a>';
+    $navbar_links .= '<a href="register.php" class="navbar-item">Register</a>'; // เพิ่มลิงก์สำหรับ Register
     $logout_button = '<a href="javascript:void(0)" onclick="document.getElementById(\'loginModal\').style.display=\'block\'" class="navbar-item">Login</a>';
 }
 ?>
