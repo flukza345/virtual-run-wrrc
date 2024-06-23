@@ -7,7 +7,6 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-
 $message = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["profile_image"])) {
@@ -15,29 +14,64 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["profile_image"])) {
 
     // Upload profile image
     $target_dir = "uploads/profiles/";
-    $profile_image = basename($_FILES["profile_image"]["name"]);
-    $target_file = $target_dir . $profile_image;
-    move_uploaded_file($_FILES["profile_image"]["tmp_name"], $target_file);
+    $target_file = $target_dir . basename($_FILES["profile_image"]["name"]);
+    $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
 
-    $sql = "UPDATE users SET profile_image = ? WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("si", $profile_image, $user_id);
+    // Check if image file is a actual image or fake image
+    $check = getimagesize($_FILES["profile_image"]["tmp_name"]);
+    if($check !== false) {
+        // Allow certain file formats
+        if ($imageFileType != "jpg" && $imageFileType != "jpeg" && $imageFileType != "png") {
+            $message = "Sorry, only JPG, JPEG, PNG files are allowed.";
+        } else {
+            // Convert HEIC to JPEG if the uploaded file is HEIC
+            if ($imageFileType == "heic" || $imageFileType == "heif") {
+                // Use Imagick to convert HEIC/HEIF to JPEG
+                try {
+                    $imagick = new Imagick($_FILES["profile_image"]["tmp_name"]);
+                    $imagick->setImageFormat("jpeg");
 
-    if ($stmt->execute()) {
-        // Profile updated successfully
-        $message = "Profile updated successfully!";
-        echo "<script>
-                alert('$message');
-                window.location.href = 'profile.php';
-              </script>";
-        exit; // Ensure no further output
+                    // Save the converted JPEG file
+                    $target_file = $target_dir . uniqid() . ".jpg";
+                    if ($imagick->writeImage($target_file)) {
+                        // Successfully converted and saved as JPEG
+                        $message = "File is converted and uploaded successfully.";
+                    } else {
+                        // Failed to convert
+                        $message = "Sorry, there was an error converting your file.";
+                    }
+                } catch (Exception $e) {
+                    $message = "Error converting file: " . $e->getMessage();
+                }
+            } else {
+                // Directly move uploaded file if it's already JPEG or PNG
+                move_uploaded_file($_FILES["profile_image"]["tmp_name"], $target_file);
+                $message = "File is uploaded successfully.";
+            }
+
+            // Update database with new profile image path
+            $sql = "UPDATE users SET profile_image = ? WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("si", $target_file, $user_id);
+
+            if ($stmt->execute()) {
+                // Profile updated successfully
+                $message .= " Profile updated successfully!";
+                echo "<script>
+                        alert('$message');
+                        window.location.href = 'profile.php';
+                      </script>";
+                exit; // Ensure no further output
+            } else {
+                // Error updating profile
+                $message .= " Error: " . $sql . "<br>" . $conn->error;
+            }
+
+            $stmt->close();
+        }
     } else {
-        // Error updating profile
-        $message = "Error: " . $sql . "<br>" . $conn->error;
+        $message = "File is not an image.";
     }
-
-    $stmt->close();
-    $conn->close();
 }
 ?>
 <!DOCTYPE html>
@@ -96,34 +130,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["profile_image"])) {
             float: right;
         }
         input[type="submit"] {
-    background-color: #e91e63;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 18px;
-    padding: 15px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-input[type="submit"]:hover {
-    background-color: #c2185b;
-}
-
-input[type="submit"]:active {
-    background-color: #a31545;
-}
-
+            background-color: #e91e63;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            padding: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        input[type="submit"]:hover {
+            background-color: #c2185b;
+        }
+        input[type="submit"]:active {
+            background-color: #a31545;
+        }
     </style>
 </head>
 <body>
     <div class="navbar">
-    <a href="javascript:history.back()" class="back-button">ย้อนกลับ</a>
+        <a href="javascript:history.back()" class="back-button">ย้อนกลับ</a>
     </div>
     <div class="container">
         <h1>เปลี่ยนรูปโปรไฟล์</h1>
         <form method="post" action="" enctype="multipart/form-data">
-           เลือกรูปภาพที่ต้องการเปลี่ยน: <input type="file" name="profile_image" required><br>
+            เลือกรูปภาพที่ต้องการเปลี่ยน: <input type="file" name="profile_image" required><br>
             <input type="submit" value="ตกลง">
         </form>
     </div>
@@ -137,4 +168,3 @@ input[type="submit"]:active {
     </script>
 </body>
 </html>
-
