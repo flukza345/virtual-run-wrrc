@@ -101,7 +101,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="navbar">
-        <a href="index.php">หน้าแรก</a>
+    <a href="javascript:history.back()" class="back-button">ย้อนกลับ</a>
     </div>
     <div class="container">
         <h1>ลงทะเบียน</h1>

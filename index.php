@@ -222,6 +222,25 @@ if (isset($_SESSION['user_id'])) {
             width: 100%;
             box-sizing: border-box;
         }
+        input[type="submit"] {
+    background-color: #e91e63;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    padding: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+input[type="submit"]:hover {
+    background-color: #c2185b;
+}
+
+input[type="submit"]:active {
+    background-color: #a31545;
+}
+
     </style>
 </head>
 <body>

@@ -121,19 +121,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background-color: #ddd;
             color: black;
         }
+
+        /* Add styles for submit button */
+        input[type="submit"] {
+            background-color: #e91e63;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            padding: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #c2185b;
+        }
+
+        input[type="submit"]:active {
+            background-color: #a31545;
+        }
     </style>
 </head>
 <body>
     <div class="navbar">
-    <a href="javascript:history.back()" class="back-button">ย้อนกลับ</a>
+        <a href="javascript:history.back()" class="back-button">ย้อนกลับ</a>
     </div>
     <div class="container">
-        <h1>Upload Run</h1>
+        <h1>ส่งผลการวิ่ง</h1>
         <form method="post" action="" enctype="multipart/form-data">
-            Distance (km): <input type="text" name="distance" required><br>
-            Date: <input type="date" name="run_date" required><br>
-            Image: <input type="file" name="image" required><br>
-            <input type="submit" value="Upload">
+            ระยะ (กิโลเมตร): <input type="text" name="distance" required><br>
+            วันที่: <input type="date" name="run_date" required><br>
+            รูปภาพอ้างอิง: <input type="file" name="image" required><br>
+            <input type="submit" value="ส่งผล">
         </form>
     </div>
 </body>
