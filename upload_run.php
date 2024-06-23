@@ -54,9 +54,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $approved = 0;
 
     // Prepare and execute SQL statement to insert run data into database
-    $sql = "INSERT INTO runs (user_id, distance, run_date, image_path, approved) VALUES (?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("idssi", $user_id, $distance, $run_date, $target_file, $approved);
+$sql = "INSERT INTO runs (user_id, distance, image_path, approved) VALUES (?, ?, ?, ?)";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("idsi", $user_id, $distance, $target_file, $approved);
+
 
     if ($stmt->execute()) {
         echo "<script>alert('Run uploaded successfully! Please wait for admin approval.'); window.location.href='index.php';</script>";
@@ -150,11 +151,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="container">
         <h1>ส่งผลการวิ่ง</h1>
         <form method="post" action="" enctype="multipart/form-data">
-            ระยะ (กิโลเมตร): <input type="text" name="distance" required><br>
-            วันที่: <input type="date" name="run_date" required><br>
-            รูปภาพอ้างอิง: <input type="file" name="image" required><br>
-            <input type="submit" value="ส่งผล">
-        </form>
+    ระยะ (กิโลเมตร): <input type="text" name="distance" required><br>
+    รูปภาพอ้างอิง: <input type="file" name="image" required><br>
+    <input type="submit" value="ส่งผล">
+</form>
+
     </div>
 </body>
 </html>

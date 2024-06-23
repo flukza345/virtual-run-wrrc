@@ -7,7 +7,7 @@ $current_month = date('Y-m');
 $sql = "SELECT users.username, users.profile_image, SUM(runs.distance) as total_distance 
         FROM runs 
         JOIN users ON runs.user_id = users.id 
-        WHERE DATE_FORMAT(runs.run_date, '%Y-%m') = ? AND runs.approved = 1
+        WHERE DATE_FORMAT(runs.created_at, '%Y-%m') = ? AND runs.approved = 1
         GROUP BY users.username 
         ORDER BY total_distance DESC";
 $stmt = $conn->prepare($sql);

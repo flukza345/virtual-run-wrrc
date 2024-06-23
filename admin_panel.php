@@ -13,13 +13,13 @@ if (isset($_SESSION['user_id'])) {
     $stmt_user->store_result();
     $stmt_user->bind_result($role);
     $stmt_user->fetch();
-    
+
     // Redirect non-admin users to index.php
     if ($role !== 'admin') {
         header("Location: index.php");
         exit();
     }
-    
+
     $stmt_user->close();
 } else {
     // Redirect to index.php if user is not logged in
@@ -36,10 +36,13 @@ if (isset($_POST['action']) && isset($_POST['run_id'])) {
         $sql_approve = "UPDATE runs SET approved = 1 WHERE id = ?";
     } elseif ($action == 'reject') {
         $sql_approve = "UPDATE runs SET approved = 0 WHERE id = ?";
-    } elseif ($action == 'edit') {
-        // Redirect to edit_run.php with run_id
-        header("Location: edit_run.php?run_id=" . $run_id);
-        exit();
+    } elseif ($action == 'edit_distance' && isset($_POST['new_distance'])) {
+        $new_distance = $_POST['new_distance'];
+        $sql_approve = "UPDATE runs SET distance = ? WHERE id = ?";
+        $stmt_approve = $conn->prepare($sql_approve);
+        $stmt_approve->bind_param("di", $new_distance, $run_id);
+        $stmt_approve->execute();
+        $stmt_approve->close();
     }
 
     $stmt_approve = $conn->prepare($sql_approve);
@@ -48,24 +51,26 @@ if (isset($_POST['action']) && isset($_POST['run_id'])) {
     $stmt_approve->close();
 }
 
-// Edit distance for a run based on POST data
-if (isset($_POST['action']) && $_POST['action'] == 'edit' && isset($_POST['run_id']) && isset($_POST['new_distance'])) {
-    $run_id = $_POST['run_id'];
-    $new_distance = $_POST['new_distance'];
-
-    $sql_edit_distance = "UPDATE runs SET distance = ? WHERE id = ?";
-    $stmt_edit_distance = $conn->prepare($sql_edit_distance);
-    $stmt_edit_distance->bind_param("di", $new_distance, $run_id);
-    $stmt_edit_distance->execute();
-    $stmt_edit_distance->close();
+// Pagination setup
+$results_per_page = 20;
+if (!isset($_GET['page'])) {
+    $page = 1;
+} else {
+    $page = $_GET['page'];
 }
 
-// Fetch all runs for admin panel
-$sql_runs = "SELECT r.id, u.username, r.distance, r.run_date, r.image_path, r.approved 
+$start_from = ($page - 1) * $results_per_page;
+
+// Fetch runs with pagination
+$sql_runs = "SELECT r.id, u.name, r.distance, r.created_at, r.image_path, r.approved 
              FROM runs r
              INNER JOIN users u ON r.user_id = u.id
-             ORDER BY r.run_date DESC";
-$result_runs = $conn->query($sql_runs);
+             ORDER BY r.created_at DESC
+             LIMIT ?, ?";
+$stmt_runs = $conn->prepare($sql_runs);
+$stmt_runs->bind_param("ii", $start_from, $results_per_page);
+$stmt_runs->execute();
+$result_runs = $stmt_runs->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -243,29 +248,29 @@ $result_runs = $conn->query($sql_runs);
 </head>
 <body>
     <div class="navbar">
-        <a href="index.php" class="navbar-item">Home</a>
-        <a href="admin_panel.php" class="navbar-item active">Admin Panel</a>
+        <a href="index.php" class="navbar-item">หน้าแรก</a>
+        <a href="add_distance.php" class="navbar-item active">ส่งระยะให้กับ</a>
         <a href="logout.php" class="navbar-item">Logout</a>
     </div>
     <div class="container">
-        <h1>Admin Panel - Running Dashboard</h1>
+        <h1>Admin Panel</h1>
         <table>
             <thead>
                 <tr>
-                    <th>Username</th>
+                    <th>Name</th>
                     <th>Date</th>
                     <th>Distance (km)</th>
                     <th>Image</th>
                     <th>Status</th>
-                    <th>Actions</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 <?php
                 while ($row = $result_runs->fetch_assoc()) {
                     echo "<tr>";
-                    echo "<td>" . htmlspecialchars($row['username']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['run_date']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['name']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['created_at']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['distance']) . "</td>";
                     echo "<td><button class='view-image-button' onclick=\"showImagePopup('" . htmlspecialchars($row['image_path']) . "')\">View Image</button></td>";
                     if ($row['approved']) {
@@ -283,6 +288,35 @@ $result_runs = $conn->query($sql_runs);
                 ?>
             </tbody>
         </table>
+
+        <!-- Pagination -->
+        <div style="text-align: center; margin-top: 20px;">
+            <?php
+            $sql_count = "SELECT COUNT(id) AS total FROM runs";
+            $result_count = $conn->query($sql_count);
+            $row_count = $result_count->fetch_assoc();
+            $total_pages = ceil($row_count['total'] / $results_per_page);
+
+            // Previous page button
+            if ($page > 1) {
+                echo "<a href='admin_panel.php?page=" . ($page - 1) . "' class='edit-button'>Previous</a>";
+            }
+
+            // Numbered pages
+            for ($i = 1; $i <= $total_pages; $i++) {
+                if ($i == $page) {
+                    echo "<a href='admin_panel.php?page=" . $i . "' class='approve-button' style='background-color: #e91e63;'>" . $i . "</a>";
+                } else {
+                    echo "<a href='admin_panel.php?page=" . $i . "' class='approve-button'>" . $i . "</a>";
+                }
+            }
+
+            // Next page button
+            if ($page < $total_pages) {
+                echo "<a href='admin_panel.php?page=" . ($page + 1) . "' class='reject-button'>Next</a>";
+            }
+            ?>
+        </div>
     </div>
 
     <!-- Image Popup -->
@@ -306,7 +340,7 @@ $result_runs = $conn->query($sql_runs);
                 <span class="close-popup" onclick="closeEditPopup()">&times;</span>
             </div>
             <div class="popup-body">
-                <form id="edit-distance-form">
+                <form id="edit-distance-form" onsubmit="return false;">
                     <input type="number" id="new-distance" name="new-distance" placeholder="New Distance (km)" required>
                     <input type="hidden" id="run-id" name="run-id">
                 </form>
@@ -346,7 +380,9 @@ $result_runs = $conn->query($sql_runs);
         }
 
         function saveDistance() {
-            var form = document.getElementById('edit-distance-form');
+            var newDistance = document.getElementById('new-distance').value;
+            var runId = document.getElementById('run-id').value;
+
             var xhr = new XMLHttpRequest();
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === XMLHttpRequest.DONE) {
@@ -359,8 +395,7 @@ $result_runs = $conn->query($sql_runs);
             };
             xhr.open('POST', 'admin_panel.php', true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            var formData = new FormData(form);
-            xhr.send(new URLSearchParams(formData).toString());
+            xhr.send('action=edit_distance&run_id=' + runId + '&new_distance=' + newDistance);
         }
 
         function approveRun(runId) {
@@ -399,5 +434,6 @@ $result_runs = $conn->query($sql_runs);
 </html>
 
 <?php
+$stmt_runs->close();
 $conn->close();
 ?>

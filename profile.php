@@ -28,7 +28,7 @@ if (isset($_SESSION['user_id'])) {
     $stmt_total_distance->close();
     
     // Fetch user's running history and approval status
-    $sql_runs = "SELECT id, distance, run_date, image_path, approved, created_at FROM runs WHERE user_id = ? ORDER BY created_at DESC";
+    $sql_runs = "SELECT id, distance, created_at, image_path, approved, created_at FROM runs WHERE user_id = ? ORDER BY created_at DESC";
     $stmt_runs = $conn->prepare($sql_runs);
     $stmt_runs->bind_param("i", $user_id);
     $stmt_runs->execute();
