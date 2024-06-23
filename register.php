@@ -57,47 +57,71 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
     <style>
-        body {
-            background-color: #f3f3f3;
-            font-family: Arial, sans-serif;
-            color: #333;
-        }
-        .container {
-            width: 80%;
-            margin: 0 auto;
-            text-align: center;
-        }
-        h1 {
-            color: #e91e63;
-        }
-        form {
-            display: inline-block;
-            text-align: left;
-        }
-        input[type="text"], input[type="password"], input[type="file"], input[type="submit"] {
-            display: block;
-            margin: 10px 0;
-            padding: 10px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .navbar {
-            overflow: hidden;
-            background-color: #333;
-        }
-        .navbar a {
-            float: left;
-            display: block;
-            color: white;
-            text-align: center;
-            padding: 14px 20px;
-            text-decoration: none;
-        }
-        .navbar a:hover {
-            background-color: #ddd;
-            color: black;
-        }
-    </style>
+    body {
+        background-color: #f3f3f3;
+        font-family: Arial, sans-serif;
+        color: #333;
+    }
+    .container {
+        width: 80%;
+        margin: 0 auto;
+        text-align: center;
+    }
+    h1 {
+        color: #e91e63;
+        font-size: 28px; /* ปรับขนาดตัวหนังสือใหญ่ขึ้น */
+        margin-bottom: 20px; /* ขอบล่างของ h1 */
+    }
+    form {
+        display: inline-block;
+        text-align: left;
+        max-width: 400px; /* ปรับขนาดฟอร์มให้ไม่เกินความกว้างของหน้าจอ */
+        margin: 0 auto; /* จัดตำแหน่งกลางฟอร์มใน container */
+    }
+    input[type="text"], input[type="password"], input[type="file"], input[type="submit"] {
+        display: block;
+        margin: 10px 0;
+        padding: 10px;
+        width: calc(100% - 20px); /* คำนวณขนาดเพื่อให้พอดีกับขนาด input */
+        box-sizing: border-box;
+        border: 1px solid #ccc; /* เส้นขอบของช่องกรอกข้อมูล */
+        border-radius: 4px; /* มุมขอบช่องกรอกข้อมูล */
+    }
+    input[type="file"] {
+        padding: 8px;
+    }
+    input[type="submit"] {
+        background-color: #e91e63; /* สีพื้นหลังปุ่ม (ชมพู) */
+        color: white; /* สีตัวอักษรของปุ่ม */
+        padding: 12px 20px; /* ขนาดของ padding ในปุ่ม */
+        border: none; /* ไม่มีเส้นขอบ */
+        border-radius: 4px; /* มุมขอบปุ่ม */
+        cursor: pointer; /* เปลี่ยนเคอร์เซอร์เป็นลูกศรเมื่อชี้ที่ปุ่ม */
+        transition: background-color 0.3s; /* เพิ่มเอฟเฟกต์การเปลี่ยนสีพื้นหลัง */
+        width: 100%; /* ปรับขนาดให้เต็มความกว้าง */
+        font-size: 16px; /* ปรับขนาดตัวหนังสือในปุ่ม */
+    }
+    input[type="submit"]:hover {
+        background-color: #d81b60; /* เปลี่ยนสีพื้นหลังเมื่อชี้ที่ปุ่ม */
+    }
+    .navbar {
+        overflow: hidden;
+        background-color: #333;
+    }
+    .navbar a {
+        float: left;
+        display: block;
+        color: white;
+        text-align: center;
+        padding: 14px 20px;
+        text-decoration: none;
+    }
+    .navbar a:hover {
+        background-color: #ddd;
+        color: black;
+    }
+</style>
+
 </head>
 <body>
     <div class="navbar">
