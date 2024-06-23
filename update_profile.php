@@ -27,21 +27,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["profile_image"])) {
             // Convert HEIC to JPEG if the uploaded file is HEIC
             if ($imageFileType == "heic" || $imageFileType == "heif") {
                 // Use Imagick to convert HEIC/HEIF to JPEG
-                try {
-                    $imagick = new Imagick($_FILES["profile_image"]["tmp_name"]);
-                    $imagick->setImageFormat("jpeg");
+                $imagick = new Imagick($_FILES["profile_image"]["tmp_name"]);
+                $imagick->setImageFormat("jpeg");
 
-                    // Save the converted JPEG file
-                    $target_file = $target_dir . uniqid() . ".jpg";
-                    if ($imagick->writeImage($target_file)) {
-                        // Successfully converted and saved as JPEG
-                        $message = "File is converted and uploaded successfully.";
-                    } else {
-                        // Failed to convert
-                        $message = "Sorry, there was an error converting your file.";
-                    }
-                } catch (Exception $e) {
-                    $message = "Error converting file: " . $e->getMessage();
+                // Save the converted JPEG file
+                $target_file = $target_dir . uniqid() . ".jpg";
+                if ($imagick->writeImage($target_file)) {
+                    // Successfully converted and saved as JPEG
+                    $message = "File is converted and uploaded successfully.";
+                } else {
+                    // Failed to convert
+                    $message = "Sorry, there was an error converting your file.";
                 }
             } else {
                 // Directly move uploaded file if it's already JPEG or PNG
