@@ -83,7 +83,7 @@ $result_runs = $conn->query($sql_runs);
             background-color: #f3f3f3;
         }
         .container {
-            width: 80%;
+            width: 90%;
             margin: 0 auto;
             padding-top: 20px;
             max-width: 1200px;
@@ -92,9 +92,11 @@ $result_runs = $conn->query($sql_runs);
             background-color: #333;
             overflow: hidden;
             border-bottom: 2px solid #e91e63;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
         }
         .navbar-item {
-            display: inline-block;
             color: white;
             text-align: center;
             padding: 10px 15px;
@@ -106,9 +108,6 @@ $result_runs = $conn->query($sql_runs);
             background-color: #ddd;
             color: black;
         }
-        .navbar a.right {
-            float: right;
-        }
         .navbar a.active {
             background-color: #e91e63;
         }
@@ -117,6 +116,9 @@ $result_runs = $conn->query($sql_runs);
             border-collapse: collapse;
             margin-top: 20px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            display: block;
+            white-space: nowrap;
         }
         table th, table td {
             padding: 12px;
@@ -181,7 +183,7 @@ $result_runs = $conn->query($sql_runs);
         .popup-container {
             position: fixed;
             background-color: white;
-            width: 80%;
+            width: 90%;
             max-width: 600px;
             top: 50%;
             left: 50%;
@@ -221,13 +223,29 @@ $result_runs = $conn->query($sql_runs);
             cursor: pointer;
             font-size: 24px;
         }
+        @media (max-width: 768px) {
+            .navbar-item {
+                font-size: 12px;
+                padding: 8px 10px;
+            }
+            table th, table td {
+                padding: 8px;
+            }
+            .edit-button, .approve-button, .reject-button, .view-image-button {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+            .popup-container {
+                width: 95%;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="navbar">
         <a href="index.php" class="navbar-item">Home</a>
         <a href="admin_panel.php" class="navbar-item active">Admin Panel</a>
-        <a href="logout.php" class="navbar-item right">Logout</a>
+        <a href="logout.php" class="navbar-item">Logout</a>
     </div>
     <div class="container">
         <h1>Admin Panel - Running Dashboard</h1>
