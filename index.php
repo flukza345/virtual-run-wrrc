@@ -113,7 +113,7 @@ if (isset($_SESSION['user_id'])) {
                 position: absolute;
                 background-color: #333;
                 width: 100%;
-                top: 98px;
+                top: 99px;
                 text-align: center;
             }
             .menu-items.active {
