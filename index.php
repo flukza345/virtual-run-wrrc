@@ -91,7 +91,7 @@ if (isset($_SESSION['user_id'])) {
         }
         .navbar .logo {
             width: auto;
-            height: 90px; /* Adjust the height to fit nicely in the navbar */
+            height: 73px; /* Adjust the height to fit nicely in the navbar */
         }
         .menu-icon {
             display: none;
@@ -113,7 +113,7 @@ if (isset($_SESSION['user_id'])) {
                 position: absolute;
                 background-color: #333;
                 width: 100%;
-                top: 60px;
+                top: 98px;
                 text-align: center;
             }
             .menu-items.active {

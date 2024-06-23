@@ -90,8 +90,8 @@ if (isset($_SESSION['user_id'])) {
             border: 3px solid #e91e63;
         }
         .navbar img.logo {
-            width: 90px;
-            height: 90px;
+            width: 73px;
+            height: 73px;
             border-radius: 0%;
             vertical-align: middle;
             border: 0px solid #e91e63;
@@ -131,7 +131,7 @@ if (isset($_SESSION['user_id'])) {
                 position: absolute;
                 background-color: #333;
                 width: 100%;
-                top: 60px;
+                top: 95px;
                 text-align: center;
             }
             .navbar .menu-items.active {
