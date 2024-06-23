@@ -4,40 +4,39 @@ session_start();
 
 $current_month = date('Y-m');
 
-$sql = "SELECT users.username, users.profile_image, SUM(runs.distance) as total_distance 
+$sql = "SELECT users.name, users.profile_image, SUM(runs.distance) as total_distance 
         FROM runs 
         JOIN users ON runs.user_id = users.id 
         WHERE DATE_FORMAT(runs.created_at, '%Y-%m') = ? AND runs.approved = 1
-        GROUP BY users.username 
+        GROUP BY users.name 
         ORDER BY total_distance DESC";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $current_month);
 $stmt->execute();
 $result = $stmt->get_result();
 
-
 // Check if user is logged in
 if (isset($_SESSION['user_id'])) {
-    // Get the username, profile image, and role of the logged-in user
+    // Get the name, profile image, and role of the logged-in user
     $user_id = $_SESSION['user_id'];
-    $sql_user = "SELECT username, profile_image, role FROM users WHERE id = ?";
+    $sql_user = "SELECT name, profile_image, role FROM users WHERE id = ?";
     $stmt_user = $conn->prepare($sql_user);
     $stmt_user->bind_param("i", $user_id);
     $stmt_user->execute();
     $stmt_user->store_result();
-    $stmt_user->bind_result($username, $profile_image, $role);
+    $stmt_user->bind_result($name, $profile_image, $role);
     $stmt_user->fetch();
     $stmt_user->close();
 
     // Navbar links based on role
-    $navbar_links = '<a href="profile.php" class="navbar-item"><img src="uploads/profiles/' . htmlspecialchars($profile_image) . '" alt="Profile Image" class="profile"> ' . htmlspecialchars($username) . '</a>';
+    $navbar_links = '<a href="profile.php" class="navbar-item"><img src="uploads/profiles/' . htmlspecialchars($profile_image) . '" alt="Profile Image" class="profile"> ' . htmlspecialchars($name) . '</a>';
     if ($role == 'admin') {
         $navbar_links .= '<a href="admin_panel.php" class="navbar-item">Admin Panel</a>';
     }
     $navbar_links .= '<a href="upload_run.php" class="navbar-item">ส่งผลการวิ่ง</a>';
     $logout_button = '<a href="logout.php" class="navbar-item">ออกจากระบบ</a>';
 } else {
-    $navbar_links = '<a href="profile.php" class="navbar-item">หน้าแรก</a>';
+    $navbar_links = '<a href="index.php" class="navbar-item">หน้าแรก</a>';
     $navbar_links .= '<a href="register.php" class="navbar-item">ลงทะเบียน</a>'; // เพิ่มลิงก์สำหรับ Register
     $logout_button = '<a href="javascript:void(0)" onclick="document.getElementById(\'loginModal\').style.display=\'block\'" class="navbar-item">เข้าสู่ระบบ</a>';
 }
@@ -55,7 +54,7 @@ if (isset($_SESSION['user_id'])) {
             color: #333;
             margin: 0;
             padding: 0;
-            background-color: #f3f3f3; /* สีพื้นหลังหลักของหน้าเว็บ */
+            background-color: #f3f3f3;
         }
         .container {
             width: 80%;
@@ -63,17 +62,19 @@ if (isset($_SESSION['user_id'])) {
             padding-top: 20px;
         }
         .navbar {
-            background-color: #333; /* สีพื้นหลังของ Navbar */
+            background-color: #333;
             overflow: hidden;
-            border-bottom: 2px solid #e91e63; /* เส้นขอบล่างของ Navbar */
+            border-bottom: 2px solid #e91e63;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
         }
         .navbar-item {
-            display: inline-block;
             color: white;
-            text-align: center;
-            padding: 14px 20px;
             text-decoration: none;
             font-size: 16px;
+            padding: 14px 20px;
             transition: background-color 0.3s;
         }
         .navbar-item:hover {
@@ -86,39 +87,28 @@ if (isset($_SESSION['user_id'])) {
             border-radius: 50%;
             margin-right: 10px;
             vertical-align: middle;
-            border: 3px solid #e91e63; /* เส้นขอบสีชมพูรอบรูปโปรไฟล์ */
+            border: 3px solid #e91e63;
         }
-        .navbar a.right {
-            float: right;
+        .navbar .logo {
+            width: auto;
+            height: 90px; /* Adjust the height to fit nicely in the navbar */
         }
-        .navbar a.active {
-            background-color: #e91e63;
-        }
-        .navbar .menu-icon {
+        .menu-icon {
             display: none;
+            cursor: pointer;
+        }
+        .menu-icon .bar {
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            margin: 5px auto;
+            transition: background-color 0.3s;
         }
         @media screen and (max-width: 768px) {
-            .navbar .menu-icon {
+            .menu-icon {
                 display: block;
-                float: right;
-                cursor: pointer;
-                padding: 15px 10px;
             }
-            .navbar .menu-icon:hover {
-                background-color: #ddd;
-            }
-            .navbar .menu-icon .bar {
-                display: block;
-                width: 25px;
-                height: 3px;
-                background-color: white;
-                margin: 5px auto;
-                transition: background-color 0.3s;
-            }
-            .navbar .menu-icon .bar:hover {
-                background-color: #e91e63;
-            }
-            .navbar .menu-items {
+            .menu-items {
                 display: none;
                 position: absolute;
                 background-color: #333;
@@ -126,29 +116,29 @@ if (isset($_SESSION['user_id'])) {
                 top: 60px;
                 text-align: center;
             }
-            .navbar .menu-items.active {
+            .menu-items.active {
                 display: block;
             }
-            .navbar .menu-items a {
+            .menu-items a {
                 display: block;
                 padding: 10px;
                 color: white;
                 text-decoration: none;
             }
-            .navbar .menu-items a:hover {
+            .menu-items a:hover {
                 background-color: #ddd;
                 color: black;
             }
         }
         h1 {
-            color: #e91e63; /* สีของหัวเรื่อง */
+            color: #e91e63;
             text-align: center;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* เงาใต้ตาราง */
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
         table th,
         table td {
@@ -157,7 +147,7 @@ if (isset($_SESSION['user_id'])) {
             border: 1px solid #ddd;
         }
         table th {
-            background-color: #e91e63; /* สีพื้นหลังของหัวตาราง */
+            background-color: #e91e63;
             color: white;
             font-weight: bold;
             text-transform: uppercase;
@@ -165,7 +155,7 @@ if (isset($_SESSION['user_id'])) {
             padding-bottom: 15px;
         }
         table tr:nth-child(even) {
-            background-color: #f2f2f2; /* สีพื้นหลังของแถวคู่ */
+            background-color: #f2f2f2;
         }
         .profile-info {
             display: flex;
@@ -176,7 +166,7 @@ if (isset($_SESSION['user_id'])) {
             height: 40px;
             border-radius: 50%;
             margin-right: 10px;
-            border: 2px solid #e91e63; /* เส้นขอบสีชมพูรอบรูปโปรไฟล์ */
+            border: 2px solid #e91e63;
         }
         .profile-info span {
             font-weight: bold;
@@ -223,28 +213,28 @@ if (isset($_SESSION['user_id'])) {
             box-sizing: border-box;
         }
         input[type="submit"] {
-    background-color: #e91e63;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 18px;
-    padding: 15px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-input[type="submit"]:hover {
-    background-color: #c2185b;
-}
-
-input[type="submit"]:active {
-    background-color: #a31545;
-}
-
+            background-color: #e91e63;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            padding: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        input[type="submit"]:hover {
+            background-color: #c2185b;
+        }
+        input[type="submit"]:active {
+            background-color: #a31545;
+        }
     </style>
 </head>
 <body>
     <div class="navbar">
+        <a href="index.php">
+            <img src="image/LOGO-01.png" alt="Logo" class="logo">
+        </a>
         <div class="menu-icon" onclick="toggleMenu()">
             <div class="bar"></div>
             <div class="bar"></div>
@@ -271,7 +261,7 @@ input[type="submit"]:active {
                 while ($row = $result->fetch_assoc()) {
                     echo "<tr>";
                     echo "<td>" . $rank++ . "</td>";
-                    echo "<td class='profile-info'><img class='profile' src='uploads/profiles/" . htmlspecialchars($row['profile_image']) . "' alt='Profile Image'><span>" . htmlspecialchars($row['username']) . "</span></td>";
+                    echo "<td class='profile-info'><img class='profile' src='uploads/profiles/" . htmlspecialchars($row['profile_image']) . "' alt='Profile Image'><span>" . htmlspecialchars($row['name']) . "</span></td>";
                     echo "<td>" . $row['total_distance'] . "</td>";
                     echo "</tr>";
                 }

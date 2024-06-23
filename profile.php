@@ -8,12 +8,12 @@ if (isset($_SESSION['user_id'])) {
     $user_id = $_SESSION['user_id'];
     
     // Fetch user profile information including profile image path
-    $sql_profile = "SELECT username, profile_image FROM users WHERE id = ?";
+    $sql_profile = "SELECT name, profile_image FROM users WHERE id = ?";
     $stmt_profile = $conn->prepare($sql_profile);
     $stmt_profile->bind_param("i", $user_id);
     $stmt_profile->execute();
     $stmt_profile->store_result();
-    $stmt_profile->bind_result($username, $profile_image);
+    $stmt_profile->bind_result($name, $profile_image);
     $stmt_profile->fetch();
     $stmt_profile->close();
     
@@ -63,6 +63,10 @@ if (isset($_SESSION['user_id'])) {
             background-color: #333;
             overflow: hidden;
             border-bottom: 2px solid #e91e63;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
         }
         .navbar-item {
             display: inline-block;
@@ -84,6 +88,13 @@ if (isset($_SESSION['user_id'])) {
             margin-right: 10px;
             vertical-align: middle;
             border: 3px solid #e91e63;
+        }
+        .navbar img.logo {
+            width: 90px;
+            height: 90px;
+            border-radius: 0%;
+            vertical-align: middle;
+            border: 0px solid #e91e63;
         }
         .navbar a.right {
             float: right;
@@ -224,6 +235,9 @@ if (isset($_SESSION['user_id'])) {
 </head>
 <body>
     <div class="navbar">
+        <a href="index.php">
+            <img src="image/LOGO-01.png" alt="Logo" class="logo">
+        </a>
         <div class="menu-icon" onclick="toggleMenu()">
             <div class="bar"></div>
             <div class="bar"></div>
@@ -231,7 +245,7 @@ if (isset($_SESSION['user_id'])) {
         </div>
         <div class="menu-items" id="menuItems">
             <a href="index.php" class="navbar-item">หน้าแรก</a>
-            <a href="profile.php" class="navbar-item"><img src="uploads/profiles/<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image" class="profile"> <?php echo htmlspecialchars($username); ?></a>
+            <a href="profile.php" class="navbar-item"><img src="uploads/profiles/<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image" class="profile"> <?php echo htmlspecialchars($name); ?></a>
             <a href="update_profile.php" class="navbar-item">เปลี่ยนรูปโปรไฟล์</a>
             <a href="upload_run.php" class="navbar-item">ส่งผลการวิ่ง</a>
             <a href="logout.php" class="navbar-item">ออกจากระบบ</a>
@@ -239,7 +253,7 @@ if (isset($_SESSION['user_id'])) {
     </div>
     <div class="container">
         <div class="user-info">
-            <h2>ข้อมูลของ <?php echo htmlspecialchars($username); ?></h2>
+            <h2>ข้อมูลของ : <?php echo htmlspecialchars($name); ?></h2>
             <?php
             $sql_approved_distance = "SELECT SUM(distance) AS approved_distance FROM runs WHERE user_id = ? AND approved = 1";
             $stmt_approved_distance = $conn->prepare($sql_approved_distance);
