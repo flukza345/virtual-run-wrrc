@@ -41,8 +41,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $check = getimagesize($_FILES["profile_image"]["tmp_name"]);
     if($check !== false) {
         // Allow certain file formats
-        if ($imageFileType != "jpg" && $imageFileType != "jpeg" && $imageFileType != "png" && $imageFileType != "heic" && $imageFileType != "heif") {
-            echo "<script>alert('Sorry, only JPG, JPEG, PNG, HEIC, HEIF files are allowed.'); window.location.href='register.php';</script>";
+        if ($imageFileType != "jpg" && $imageFileType != "jpeg" && $imageFileType != "png" && $imageFileType != "HEIC" && $imageFileType != "") {
+            echo "<script>alert('Sorry, only JPG, JPEG, PNG files are allowed.'); window.location.href='register.php';</script>";
             exit();
         }
 
