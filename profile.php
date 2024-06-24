@@ -245,7 +245,7 @@ if (isset($_SESSION['user_id'])) {
         </div>
         <div class="menu-items" id="menuItems">
             <a href="index.php" class="navbar-item">หน้าแรก</a>
-            <a href="profile.php" class="navbar-item"><img src="uploads/profiles/<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image" class="profile"> <?php echo htmlspecialchars($name); ?></a>
+            <a href="profile.php" class="navbar-item"><img src="<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image" class="profile"> <?php echo htmlspecialchars($name); ?></a>
             <a href="update_profile.php" class="navbar-item">เปลี่ยนรูปโปรไฟล์</a>
             <a href="upload_run.php" class="navbar-item">ส่งผลการวิ่ง</a>
             <a href="logout.php" class="navbar-item">ออกจากระบบ</a>

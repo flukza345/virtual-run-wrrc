@@ -29,7 +29,7 @@ if (isset($_SESSION['user_id'])) {
     $stmt_user->close();
 
     // Navbar links based on role
-    $navbar_links = '<a href="profile.php" class="navbar-item"><img src="uploads/profiles/' . htmlspecialchars($profile_image) . '" alt="Profile Image" class="profile"> ' . htmlspecialchars($name) . '</a>';
+    $navbar_links = '<a href="profile.php" class="navbar-item"><img src="' . htmlspecialchars($profile_image) . '" alt="Profile Image" class="profile"> ' . htmlspecialchars($name) . '</a>';
     if ($role == 'admin') {
         $navbar_links .= '<a href="admin_panel.php" class="navbar-item">Admin Panel</a>';
     }

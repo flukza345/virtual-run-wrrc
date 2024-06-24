@@ -3,7 +3,7 @@ include 'config.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'];
-    $name = $_POST['name']; // เพิ่มการรับค่า 'name' จากฟอร์ม
+    $name = $_POST['name'];
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
 
@@ -33,20 +33,58 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $upload_dir = "uploads/profiles/";
     $profile_image = $_FILES['profile_image']['name'];
     $target_file = $upload_dir . basename($profile_image);
-    move_uploaded_file($_FILES['profile_image']['tmp_name'], $target_file);
+    
+    // Get the file extension
+    $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+    
+    // Check if image file is a actual image or fake image
+    $check = getimagesize($_FILES["profile_image"]["tmp_name"]);
+    if($check !== false) {
+        // Allow certain file formats
+        if ($imageFileType != "jpg" && $imageFileType != "jpeg" && $imageFileType != "png" && $imageFileType != "heic" && $imageFileType != "heif") {
+            echo "<script>alert('Sorry, only JPG, JPEG, PNG, HEIC, HEIF files are allowed.'); window.location.href='register.php';</script>";
+            exit();
+        }
 
-    $sql = "INSERT INTO users (username, name, password, profile_image) VALUES (?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssss", $username, $name, $hashed_password, $profile_image); // เพิ่ม 'name' ในการ bind_param
+        // Handle HEIC file type (Convert HEIC to JPEG)
+        if ($imageFileType == "heic" || $imageFileType == "heif") {
+            // Use Imagick to convert HEIC/HEIF to JPEG
+            $imagick = new Imagick($_FILES["profile_image"]["tmp_name"]);
+            $imagick->setImageFormat("jpeg");
 
-    if ($stmt->execute()) {
-        echo "<script>alert('Registration successful!'); window.location.href='index.php';</script>";
+            // Save the converted JPEG file
+            $target_file = $upload_dir . uniqid() . ".jpg";
+            if ($imagick->writeImage($target_file)) {
+                // Successfully converted and saved as JPEG
+                $message = "File is converted and uploaded successfully.";
+            } else {
+                // Failed to convert
+                $message = "Sorry, there was an error converting your file.";
+                echo "<script>alert('$message'); window.location.href='register.php';</script>";
+                exit();
+            }
+        } else {
+            // Directly move uploaded file if it's already JPEG or PNG
+            move_uploaded_file($_FILES['profile_image']['tmp_name'], $target_file);
+        }
+
+        // Insert user data into database
+        $sql = "INSERT INTO users (username, name, password, profile_image) VALUES (?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ssss", $username, $name, $hashed_password, $target_file);
+
+        if ($stmt->execute()) {
+            echo "<script>alert('Registration successful!'); window.location.href='index.php';</script>";
+        } else {
+            echo "Error: " . $sql . "<br>" . $conn->error;
+        }
+
+        $stmt->close();
+        $conn->close();
     } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
+        echo "<script>alert('File is not an image.'); window.location.href='register.php';</script>";
+        exit();
     }
-
-    $stmt->close();
-    $conn->close();
 }
 ?>
 
@@ -69,40 +107,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     h1 {
         color: #e91e63;
-        font-size: 28px; /* ปรับขนาดตัวหนังสือใหญ่ขึ้น */
-        margin-bottom: 20px; /* ขอบล่างของ h1 */
+        font-size: 28px;
+        margin-bottom: 20px;
     }
     form {
         display: inline-block;
         text-align: left;
-        max-width: 400px; /* ปรับขนาดฟอร์มให้ไม่เกินความกว้างของหน้าจอ */
-        margin: 0 auto; /* จัดตำแหน่งกลางฟอร์มใน container */
+        max-width: 400px;
+        margin: 0 auto;
     }
     input[type="text"], input[type="password"], input[type="file"], input[type="submit"] {
         display: block;
         margin: 10px 0;
         padding: 10px;
-        width: calc(100% - 20px); /* คำนวณขนาดเพื่อให้พอดีกับขนาด input */
+        width: calc(100% - 20px);
         box-sizing: border-box;
-        border: 1px solid #ccc; /* เส้นขอบของช่องกรอกข้อมูล */
-        border-radius: 4px; /* มุมขอบช่องกรอกข้อมูล */
+        border: 1px solid #ccc;
+        border-radius: 4px;
     }
     input[type="file"] {
         padding: 8px;
     }
     input[type="submit"] {
-        background-color: #e91e63; /* สีพื้นหลังปุ่ม (ชมพู) */
-        color: white; /* สีตัวอักษรของปุ่ม */
-        padding: 12px 20px; /* ขนาดของ padding ในปุ่ม */
-        border: none; /* ไม่มีเส้นขอบ */
-        border-radius: 4px; /* มุมขอบปุ่ม */
-        cursor: pointer; /* เปลี่ยนเคอร์เซอร์เป็นลูกศรเมื่อชี้ที่ปุ่ม */
-        transition: background-color 0.3s; /* เพิ่มเอฟเฟกต์การเปลี่ยนสีพื้นหลัง */
-        width: 100%; /* ปรับขนาดให้เต็มความกว้าง */
-        font-size: 16px; /* ปรับขนาดตัวหนังสือในปุ่ม */
+        background-color: #e91e63;
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        width: 100%;
+        font-size: 16px;
     }
     input[type="submit"]:hover {
-        background-color: #d81b60; /* เปลี่ยนสีพื้นหลังเมื่อชี้ที่ปุ่ม */
+        background-color: #d81b60;
     }
     .navbar {
         overflow: hidden;
@@ -120,17 +158,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         background-color: #ddd;
         color: black;
     }
-</style>
-
+    </style>
 </head>
 <body>
     <div class="navbar">
-    <a href="javascript:history.back()" class="back-button">ย้อนกลับ</a>
+        <a href="javascript:history.back()" class="back-button">ย้อนกลับ</a>
     </div>
     <div class="container">
         <h1>ลงทะเบียน</h1>
         <form method="post" action="" enctype="multipart/form-data">
-            ชื่อ: <input type="text" name="name" required><br> <!-- เพิ่มฟิลด์ 'name' -->
+            ชื่อ: <input type="text" name="name" required><br>
             ชื่อผู้ใช้: <input type="text" name="username" required><br>
             รหัสผ่าน: <input type="password" name="password" required><br>
             ยืนยันรหัสผ่าน: <input type="password" name="confirm_password" required><br>
