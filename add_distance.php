@@ -29,7 +29,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($file_error === 0) {
                 if ($file_size < 5242880) { // 5 MB limit for file size
                     // Set target directory and file name
-                    $target_dir = "uploads/profiles/";
+                    $target_dir = "uploads/";
                     if (!is_dir($target_dir)) {
                         mkdir($target_dir, 0777, true); // Create directory if it doesn't exist
                     }
