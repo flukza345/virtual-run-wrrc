@@ -26,11 +26,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["profile_image"])) {
         if ($check !== false) {
             // Allow certain file formats
             if ($imageFileType != "jpg" && $imageFileType != "jpeg" && $imageFileType != "png") {
-                $message = "Sorry, only JPG, JPEG, PNG files are allowed.";
+                $message = "ขออภัย อนุญาตเฉพาะไฟล์ JPG, JPEG, PNG เท่านั้น";
             } else {
                 // Directly move uploaded file if it's already JPEG or PNG
                 if (move_uploaded_file($_FILES["profile_image"]["tmp_name"], $target_file)) {
-                    $message = "File is uploaded successfully.";
+                    $message = "อัปโหลดไฟล์เรียบร้อยแล้ว";
 
                     // Update database with new profile image path
                     $sql = "UPDATE users SET profile_image = ? WHERE id = ?";
@@ -39,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["profile_image"])) {
 
                     if ($stmt->execute()) {
                         // Profile updated successfully
-                        $message .= " Profile updated successfully!";
+                        $message .= " อัปเดตโปรไฟล์เรียบร้อยแล้ว!";
                         echo "<script>
                                 alert('$message');
                                 window.location.href = 'profile.php';
@@ -47,16 +47,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["profile_image"])) {
                         exit; // Ensure no further output
                     } else {
                         // Error updating profile
-                        $message .= " Error: " . $sql . "<br>" . $conn->error;
+                        $message .= " ข้อผิดพลาด: " . $sql . "<br>" . $conn->error;
                     }
 
                     $stmt->close();
                 } else {
-                    $message = "Sorry, there was an error uploading your file.";
+                    $message = "ขออภัย เกิดข้อผิดพลาดในการอัปโหลดไฟล์ของคุณ";
                 }
             }
         } else {
-            $message = "File is not an image.";
+            $message = "ไฟล์ไม่ใช่รูปภาพ";
         }
     }
 }
