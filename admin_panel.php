@@ -43,22 +43,23 @@ if (isset($_POST['action']) && isset($_POST['run_id'])) {
         $stmt_approve->bind_param("di", $new_distance, $run_id);
         $stmt_approve->execute();
         $stmt_approve->close();
+    } else {
+        // If action is not recognized, return without processing
+        header("Location: admin_panel.php");
+        exit();
     }
 
-    $stmt_approve = $conn->prepare($sql_approve);
-    $stmt_approve->bind_param("i", $run_id);
-    $stmt_approve->execute();
-    $stmt_approve->close();
+    if (!isset($stmt_approve)) {
+        $stmt_approve = $conn->prepare($sql_approve);
+        $stmt_approve->bind_param("i", $run_id);
+        $stmt_approve->execute();
+        $stmt_approve->close();
+    }
 }
 
 // Pagination setup
 $results_per_page = 20;
-if (!isset($_GET['page'])) {
-    $page = 1;
-} else {
-    $page = $_GET['page'];
-}
-
+$page = isset($_GET['page']) ? $_GET['page'] : 1;
 $start_from = ($page - 1) * $results_per_page;
 
 // Fetch runs with pagination
