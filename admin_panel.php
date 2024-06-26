@@ -1,76 +1,76 @@
 <?php
-session_start(); // เริ่ม session (หากยังไม่เริ่ม)
-if (!isset($_SESSION['username'])) { // ถ้ายังไม่ได้เข้าสู่ระบบให้ redirect ไปยังหน้า login.php
-    header("Location: login.php");
+include 'config.php';
+session_start();
+
+// Check if user is logged in and is admin
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id'];
+
+    $sql_user = "SELECT role FROM users WHERE id = ?";
+    $stmt_user = $conn->prepare($sql_user);
+    $stmt_user->bind_param("i", $user_id);
+    $stmt_user->execute();
+    $stmt_user->store_result();
+    $stmt_user->bind_result($role);
+    $stmt_user->fetch();
+
+    // Redirect non-admin users to index.php
+    if ($role !== 'admin') {
+        header("Location: index.php");
+        exit();
+    }
+
+    $stmt_user->close();
+} else {
+    // Redirect to index.php if user is not logged in
+    header("Location: index.php");
     exit();
 }
 
-// Include config file
-require_once "config.php";
+// Approve or reject a run based on POST data
+if (isset($_POST['action']) && isset($_POST['run_id'])) {
+    $action = $_POST['action'];
+    $run_id = $_POST['run_id'];
 
-// เริ่มการตรวจสอบหลังจากที่ผู้ใช้กด submit form
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if (isset($_POST['user'], $_POST['distance']) && !empty($_FILES['image']['name'])) {
-        $user_id = $_POST['user'];
-        $distance = $_POST['distance'];
-
-        // File upload variables
-        $file_name = $_FILES['image']['name'];
-        $file_size = $_FILES['image']['size'];
-        $file_tmp = $_FILES['image']['tmp_name'];
-        $file_type = $_FILES['image']['type'];
-        $file_error = $_FILES['image']['error'];
-
-        // Check file extension
-        $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-        $extensions = array("jpeg", "jpg", "png");
-
-        if (in_array($file_ext, $extensions)) {
-            if ($file_error === 0) {
-                if ($file_size < 5242880) { // 5 MB limit for file size
-                    // Set target directory and file name
-                    $target_dir = "uploads/profiles/";
-                    if (!is_dir($target_dir)) {
-                        mkdir($target_dir, 0777, true); // Create directory if it doesn't exist
-                    }
-                    $target_file = $target_dir . uniqid() . "." . $file_ext;
-
-                    // Move the uploaded file to the target directory
-                    if (move_uploaded_file($file_tmp, $target_file)) {
-                        // Prepare image path for database storage
-                        $imgContent = addslashes($target_file);
-
-                        // Insert distance and image into database
-                        $sql = "INSERT INTO runs (user_id, distance, image_path, created_at) VALUES (?, ?, ?, NOW())";
-                        $stmt = $conn->prepare($sql);
-                        if ($stmt === false) {
-                            die('Prepare failed: ' . $conn->error);
-                        }
-                        $stmt->bind_param("ids", $user_id, $distance, $imgContent);
-
-                        if ($stmt->execute()) {
-                            $message = "Distance and image added successfully!";
-                        } else {
-                            $message = "Error: " . $stmt->error;
-                        }
-
-                        $stmt->close();
-                    } else {
-                        $message = "Failed to move uploaded file.";
-                    }
-                } else {
-                    $message = "File size exceeds 5 MB limit.";
-                }
-            } else {
-                $message = "Error uploading file. Error code: $file_error";
-            }
-        } else {
-            $message = "Invalid file type. Only JPEG, JPG, and PNG files are allowed.";
-        }
-    } else {
-        $message = "Please select a user, enter distance, and upload an image.";
+    if ($action == 'approve') {
+        $sql_approve = "UPDATE runs SET approved = 1 WHERE id = ?";
+    } elseif ($action == 'reject') {
+        $sql_approve = "UPDATE runs SET approved = 0 WHERE id = ?";
+    } elseif ($action == 'edit_distance' && isset($_POST['new_distance'])) {
+        $new_distance = $_POST['new_distance'];
+        $sql_approve = "UPDATE runs SET distance = ? WHERE id = ?";
+        $stmt_approve = $conn->prepare($sql_approve);
+        $stmt_approve->bind_param("di", $new_distance, $run_id);
+        $stmt_approve->execute();
+        $stmt_approve->close();
     }
+
+    $stmt_approve = $conn->prepare($sql_approve);
+    $stmt_approve->bind_param("i", $run_id);
+    $stmt_approve->execute();
+    $stmt_approve->close();
 }
+
+// Pagination setup
+$results_per_page = 20;
+if (!isset($_GET['page'])) {
+    $page = 1;
+} else {
+    $page = $_GET['page'];
+}
+
+$start_from = ($page - 1) * $results_per_page;
+
+// Fetch runs with pagination
+$sql_runs = "SELECT r.id, u.name, r.distance, r.created_at, r.image_path, r.approved 
+             FROM runs r
+             INNER JOIN users u ON r.user_id = u.id
+             ORDER BY r.created_at DESC
+             LIMIT ?, ?";
+$stmt_runs = $conn->prepare($sql_runs);
+$stmt_runs->bind_param("ii", $start_from, $results_per_page);
+$stmt_runs->execute();
+$result_runs = $stmt_runs->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -78,13 +78,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Run Distance and Image</title>
+    <title>Admin Panel - Running Dashboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f3f3f3;
+            color: #333;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            background-color: #f3f3f3;
+        }
+        .container {
+            width: 90%;
+            margin: 0 auto;
+            padding-top: 20px;
+            max-width: 1200px;
         }
         .navbar {
             background-color: #333;
@@ -106,152 +113,327 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             background-color: #ddd;
             color: black;
         }
-        .navbar a {
-            float: left;
-            display: block;
-            color: #f2f2f2;
-            text-align: center;
-            padding: 14px 20px;
-            text-decoration: none;
-        }
-        .navbar a:hover {
-            background-color: #ddd;
-            color: black;
-        }
-        .navbar a.logout {
-            float: right;
-        }
         .navbar a.active {
             background-color: #e91e63;
         }
-        .content {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        label {
-            font-weight: bold;
-            margin-bottom: 10px;
-            display: block;
-        }
-        input[type="number"], select {
+        table {
             width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            display: block;
+            white-space: nowrap;
         }
-        input[type="file"] {
-            margin-bottom: 20px;
+        table th, table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
         }
-        input[type="submit"] {
-            background-color: #4CAF50;
+        table th {
+            background-color: #e91e63;
             color: white;
-            padding: 12px 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding-top: 15px;
+            padding-bottom: 15px;
+        }
+        table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .status-approved {
+            color: green;
+            font-weight: bold;
+        }
+        .status-pending {
+            color: orange;
+            font-weight: bold;
+        }
+        .edit-button, .approve-button, .reject-button, .view-image-button {
+            padding: 8px 12px;
             border: none;
-            border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
             transition: background-color 0.3s;
         }
-        input[type="submit"]:hover {
-            background-color: #45a049;
+        .edit-button:hover, .approve-button:hover, .reject-button:hover, .view-image-button:hover {
+            background-color: #ddd;
         }
-        .message-popup {
+        .edit-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .approve-button {
+            background-color: #008CBA;
+            color: white;
+        }
+        .reject-button {
+            background-color: #f44336;
+            color: white;
+        }
+        .view-image-button {
+            background-color: #2196F3;
+            color: white;
+        }
+        /* Popup CSS */
+        .popup-overlay {
             display: none;
             position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .popup-container {
+            position: fixed;
+            background-color: white;
+            width: 90%;
+            max-width: 600px;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: #ffffff;
             padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
             z-index: 1000;
         }
-        .message-popup p {
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 10px;
         }
-        .message-popup button {
-            background-color: #007bff;
-            color: white;
+        .popup-header h2 {
+            margin: 0;
+        }
+        .popup-body {
+            text-align: center;
+            padding: 20px;
+        }
+        .popup-footer {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .popup-footer button {
             padding: 10px 20px;
             border: none;
-            border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
             transition: background-color 0.3s;
         }
-        .message-popup button:hover {
-            background-color: #0056b3;
+        .popup-footer button:hover {
+            background-color: #ddd;
+        }
+        .close-popup {
+            cursor: pointer;
+            font-size: 24px;
+        }
+        @media (max-width: 768px) {
+            .navbar-item {
+                font-size: 12px;
+                padding: 8px 10px;
+            }
+            table th, table td {
+                padding: 8px;
+            }
+            .edit-button, .approve-button, .reject-button, .view-image-button {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+            .popup-container {
+                width: 95%;
+            }
         }
     </style>
 </head>
 <body>
-<div class="navbar">
-    <a href="index.php" class="navbar-item">หน้าแรก</a>
-    <a href="admin_panel.php" class="navbar-item active">Admin Panel</a>
-    <a href="logout.php" class="navbar-item">Logout</a>
-</div>
-<br>
+    <div class="navbar">
+        <a href="index.php" class="navbar-item">หน้าแรก</a>
+        <a href="add_distance.php" class="navbar-item active">ส่งระยะให้กับ</a>
+        <a href="logout.php" class="navbar-item">Logout</a>
+    </div>
+    <div class="container">
+        <h1>Admin Panel</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Distance (km)</th>
+                    <th>Image</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                while ($row = $result_runs->fetch_assoc()) {
+                    echo "<tr>";
+                    echo "<td>" . htmlspecialchars($row['name']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['created_at']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['distance']) . "</td>";
+                    echo "<td><button class='view-image-button' onclick=\"showImagePopup('" . htmlspecialchars($row['image_path']) . "')\">View Image</button></td>";
+                    if ($row['approved']) {
+                        echo "<td class='status-approved'>Approved</td>";
+                    } else {
+                        echo "<td class='status-pending'>Pending</td>";
+                    }
+                    echo "<td>";
+                    echo "<button class='edit-button' onclick=\"editRun(" . $row['id'] . ")\">Edit Distance</button>";
+                    echo "<button class='approve-button' onclick=\"approveRun(" . $row['id'] . ")\">Approve</button>";
+                    echo "<button class='reject-button' onclick=\"rejectRun(" . $row['id'] . ")\">Reject</button>";
+                    echo "</td>";
+                    echo "</tr>";
+                }
+                ?>
+            </tbody>
+        </table>
 
-<div class="content">
-    <h1>Add Run Distance and Image</h1>
-    <form action="add_distance.php" method="POST" enctype="multipart/form-data">
-        <label for="user">Select User:</label>
-        <select id="user" name="user" required>
-            <option value="">Select User</option>
+        <!-- Pagination -->
+        <div style="text-align: center; margin-top: 20px;">
             <?php
-            // Fetch all users
-            $sql_users = "SELECT id, name FROM users";
-            $result_users = $conn->query($sql_users);
+            $sql_count = "SELECT COUNT(id) AS total FROM runs";
+            $result_count = $conn->query($sql_count);
+            $row_count = $result_count->fetch_assoc();
+            $total_pages = ceil($row_count['total'] / $results_per_page);
 
-            if ($result_users->num_rows > 0) {
-                while ($row = $result_users->fetch_assoc()) {
-                    echo "<option value='" . $row['id'] . "'>" . htmlspecialchars($row['name']) . "</option>";
+            // Previous page button
+            if ($page > 1) {
+                echo "<a href='admin_panel.php?page=" . ($page - 1) . "' class='edit-button'>Previous</a>";
+            }
+
+            // Numbered pages
+            for ($i = 1; $i <= $total_pages; $i++) {
+                if ($i == $page) {
+                    echo "<a href='admin_panel.php?page=" . $i . "' class='approve-button' style='background-color: #e91e63;'>" . $i . "</a>";
+                } else {
+                    echo "<a href='admin_panel.php?page=" . $i . "' class='approve-button'>" . $i . "</a>";
                 }
             }
+
+            // Next page button
+            if ($page < $total_pages) {
+                echo "<a href='admin_panel.php?page=" . ($page + 1) . "' class='reject-button'>Next</a>";
+            }
             ?>
-        </select>
-        <label for="distance">Distance (km):</label>
-        <input type="number" id="distance" name="distance" placeholder="Enter distance in kilometers" required>
-        <label for="image">Upload Image:</label>
-        <input type="file" id="image" name="image" accept="image/*" required>
-        <input type="submit" value="Add Distance and Image">
-    </form>
-</div>
-
-<!-- Message Popup -->
-<?php if (isset($message)): ?>
-    <div class="message-popup">
-        <p><?php echo $message; ?></p>
-        <button onclick="closeMessagePopup()">OK</button>
+        </div>
     </div>
-<?php endif; ?>
 
-<script>
-    function closeMessagePopup() {
-        var popup = document.querySelector('.message-popup');
-        popup.style.display = 'none';
-        window.location.href = 'admin_panel.php'; // Redirect to admin_panel.php
-    }
+    <!-- Image Popup -->
+    <div class="popup-overlay" id="image-popup">
+        <div class="popup-container">
+            <div class="popup-header">
+                <h2>Running Image</h2>
+                <span class="close-popup" onclick="closeImagePopup()">&times;</span>
+            </div>
+            <div class="popup-body">
+                <img id="popup-image" src="" alt="Running Image" style="max-width: 100%; max-height: 80vh;">
+            </div>
+        </div>
+    </div>
 
-    // Show message popup if PHP message is set
-    <?php if (isset($message)): ?>
-        var popup = document.querySelector('.message-popup');
-        popup.style.display = 'block';
-    <?php endif; ?>
-</script>
+    <!-- Edit Distance Popup -->
+    <div class="popup-overlay" id="edit-popup">
+        <div class="popup-container">
+            <div class="popup-header">
+                <h2>Edit Distance</h2>
+                <span class="close-popup" onclick="closeEditPopup()">&times;</span>
+            </div>
+            <div class="popup-body">
+                <form id="edit-distance-form" onsubmit="return false;">
+                    <input type="number" id="new-distance" name="new-distance" placeholder="New Distance (km)" required>
+                    <input type="hidden" id="run-id" name="run-id">
+                </form>
+            </div>
+            <div class="popup-footer">
+                <button class="save-button" onclick="saveDistance()">Save</button>
+                <button class="cancel-button" onclick="closeEditPopup()">Cancel</button>
+            </div>
+        </div>
+    </div>
 
+    <script>
+        function showImagePopup(imagePath) {
+            var popup = document.getElementById('image-popup');
+            var popupImage = document.getElementById('popup-image');
+
+            popupImage.src = imagePath;
+            popup.style.display = 'block';
+        }
+
+        function closeImagePopup() {
+            var popup = document.getElementById('image-popup');
+            popup.style.display = 'none';
+        }
+
+        function editRun(runId) {
+            var popup = document.getElementById('edit-popup');
+            var form = document.getElementById('edit-distance-form');
+            var runIdInput = document.getElementById('run-id');
+            runIdInput.value = runId;
+            popup.style.display = 'block';
+        }
+
+        function closeEditPopup() {
+            var popup = document.getElementById('edit-popup');
+            popup.style.display = 'none';
+        }
+
+        function saveDistance() {
+            var newDistance = document.getElementById('new-distance').value;
+            var runId = document.getElementById('run-id').value;
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + xhr.status);
+                    }
+                }
+            };
+            xhr.open('POST', 'admin_panel.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.send('action=edit_distance&run_id=' + runId + '&new_distance=' + newDistance);
+        }
+
+        function approveRun(runId) {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + xhr.status);
+                    }
+                }
+            };
+            xhr.open('POST', 'admin_panel.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.send('action=approve&run_id=' + runId);
+        }
+
+        function rejectRun(runId) {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + xhr.status);
+                    }
+                }
+            };
+            xhr.open('POST', 'admin_panel.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.send('action=reject&run_id=' + runId);
+        }
+    </script>
 </body>
 </html>
 
-<?php $conn->close(); ?>
+<?php
+$stmt_runs->close();
+$conn->close();
+?>
