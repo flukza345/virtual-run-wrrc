@@ -12,47 +12,52 @@ $message = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["profile_image"])) {
     $user_id = $_SESSION['user_id'];
 
-    // Upload profile image
-    $target_dir = "uploads/profiles/";
-    $target_file = $target_dir . basename($_FILES["profile_image"]["name"]);
-    $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-
-    // Check if image file is a actual image or fake image
-    $check = getimagesize($_FILES["profile_image"]["tmp_name"]);
-    if ($check !== false) {
-        // Allow certain file formats
-        if ($imageFileType != "jpg" && $imageFileType != "jpeg" && $imageFileType != "png") {
-            $message = "Sorry, only JPG, JPEG, PNG files are allowed.";
-        } else {
-            // Directly move uploaded file if it's already JPEG or PNG
-            if (move_uploaded_file($_FILES["profile_image"]["tmp_name"], $target_file)) {
-                $message = "File is uploaded successfully.";
-
-                // Update database with new profile image path
-                $sql = "UPDATE users SET profile_image = ? WHERE id = ?";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("si", $target_file, $user_id);
-
-                if ($stmt->execute()) {
-                    // Profile updated successfully
-                    $message .= " Profile updated successfully!";
-                    echo "<script>
-                            alert('$message');
-                            window.location.href = 'profile.php';
-                          </script>";
-                    exit; // Ensure no further output
-                } else {
-                    // Error updating profile
-                    $message .= " Error: " . $sql . "<br>" . $conn->error;
-                }
-
-                $stmt->close();
-            } else {
-                $message = "Sorry, there was an error uploading your file.";
-            }
-        }
+    // ตรวจสอบว่าไฟล์ถูกอัปโหลดหรือไม่
+    if ($_FILES["profile_image"]["error"] != UPLOAD_ERR_OK) {
+        $message = "มีข้อผิดพลาดในการอัปโหลดไฟล์: " . $_FILES["profile_image"]["error"];
     } else {
-        $message = "File is not an image.";
+        // Upload profile image
+        $target_dir = "uploads/profiles/";
+        $target_file = $target_dir . basename($_FILES["profile_image"]["name"]);
+        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+
+        // Check if image file is a actual image or fake image
+        $check = getimagesize($_FILES["profile_image"]["tmp_name"]);
+        if ($check !== false) {
+            // Allow certain file formats
+            if ($imageFileType != "jpg" && $imageFileType != "jpeg" && $imageFileType != "png") {
+                $message = "Sorry, only JPG, JPEG, PNG files are allowed.";
+            } else {
+                // Directly move uploaded file if it's already JPEG or PNG
+                if (move_uploaded_file($_FILES["profile_image"]["tmp_name"], $target_file)) {
+                    $message = "File is uploaded successfully.";
+
+                    // Update database with new profile image path
+                    $sql = "UPDATE users SET profile_image = ? WHERE id = ?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("si", $target_file, $user_id);
+
+                    if ($stmt->execute()) {
+                        // Profile updated successfully
+                        $message .= " Profile updated successfully!";
+                        echo "<script>
+                                alert('$message');
+                                window.location.href = 'profile.php';
+                              </script>";
+                        exit; // Ensure no further output
+                    } else {
+                        // Error updating profile
+                        $message .= " Error: " . $sql . "<br>" . $conn->error;
+                    }
+
+                    $stmt->close();
+                } else {
+                    $message = "Sorry, there was an error uploading your file.";
+                }
+            }
+        } else {
+            $message = "File is not an image.";
+        }
     }
 }
 ?>
