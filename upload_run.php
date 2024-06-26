@@ -42,7 +42,6 @@ function sendLineNotify($message, $image_path) {
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user_id = $_SESSION['user_id'];
     $distance = $_POST['distance'];
-    $run_date = $_POST['run_date'];
 
     $upload_dir = "uploads/";
     $image_name = $_FILES['image']['name'];
@@ -141,7 +140,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             text-align: left;
             margin-top: 20px;
         }
-        input[type="text"], input[type="date"], input[type="file"], input[type="submit"] {
+        input[type="text"], input[type="file"], input[type="submit"] {
             display: block;
             margin: 10px 0;
             padding: 10px;
