@@ -60,7 +60,7 @@ $stmt->bind_param("idsi", $user_id, $distance, $target_file, $approved);
 
 
     if ($stmt->execute()) {
-        echo "<script>alert('Run uploaded successfully! Please wait for admin approval.'); window.location.href='index.php';</script>";
+        echo "<script>alert('!!..ส่งผลการวิ่งสำเร็จ รอแอดมิน อนุมัติผล..!!'); window.location.href='index.php';</script>";
     } else {
         echo "Error: " . $sql . "<br>" . $conn->error;
     }
