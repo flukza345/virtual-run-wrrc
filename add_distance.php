@@ -10,7 +10,7 @@ require_once "config.php";
 
 // เริ่มการตรวจสอบหลังจากที่ผู้ใช้กด submit form
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if (isset($_POST['user'], $_POST['distance']) && !empty($_FILES['image'])) {
+    if (isset($_POST['user'], $_POST['distance']) && !empty($_FILES['image']['name'])) {
         $user_id = $_POST['user'];
         $distance = $_POST['distance'];
 
@@ -28,26 +28,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (in_array($file_ext, $extensions)) {
             if ($file_error === 0) {
                 if ($file_size < 5242880) { // 5 MB limit for file size
-                    // Prepare image for database storage
-                    $imgContent = addslashes(file_get_contents($file_tmp));
-
-                    // Insert distance and image into database
-                    $sql = "INSERT INTO runs (user_id, distance, image_path, created_at) VALUES (?, ?, ?, NOW())";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("ids", $user_id, $distance, $imgContent);
-
-                    if ($stmt->execute()) {
-                        $message = "Distance and image added successfully!";
-                    } else {
-                        $message = "Error: " . $conn->error;
+                    // Set target directory and file name
+                    $target_dir = "uploads/profiles/";
+                    if (!is_dir($target_dir)) {
+                        mkdir($target_dir, 0777, true); // Create directory if it doesn't exist
                     }
+                    $target_file = $target_dir . uniqid() . "." . $file_ext;
 
-                    $stmt->close();
+                    // Move the uploaded file to the target directory
+                    if (move_uploaded_file($file_tmp, $target_file)) {
+                        // Prepare image path for database storage
+                        $imgContent = addslashes($target_file);
+
+                        // Insert distance and image into database
+                        $sql = "INSERT INTO runs (user_id, distance, image_path, created_at) VALUES (?, ?, ?, NOW())";
+                        $stmt = $conn->prepare($sql);
+                        $stmt->bind_param("ids", $user_id, $distance, $imgContent);
+
+                        if ($stmt->execute()) {
+                            $message = "Distance and image added successfully!";
+                        } else {
+                            $message = "Error: " . $conn->error;
+                        }
+
+                        $stmt->close();
+                    } else {
+                        $message = "Failed to move uploaded file.";
+                    }
                 } else {
                     $message = "File size exceeds 5 MB limit.";
                 }
             } else {
-                $message = "Error uploading file.";
+                $message = "Error uploading file. Error code: $file_error";
             }
         } else {
             $message = "Invalid file type. Only JPEG, JPG, and PNG files are allowed.";
