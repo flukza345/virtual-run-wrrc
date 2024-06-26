@@ -21,38 +21,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["profile_image"])) {
         $target_file = $target_dir . basename($_FILES["profile_image"]["name"]);
         $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
 
-        // Check if image file is a actual image or fake image
+        // ตรวจสอบว่าเป็นไฟล์รูปภาพหรือไม่
         $check = getimagesize($_FILES["profile_image"]["tmp_name"]);
         if ($check !== false) {
-            // Allow certain file formats
+            // อนุญาตเฉพาะไฟล์ JPG, JPEG, PNG
             if ($imageFileType != "jpg" && $imageFileType != "jpeg" && $imageFileType != "png") {
                 $message = "ขออภัย อนุญาตเฉพาะไฟล์ JPG, JPEG, PNG เท่านั้น";
             } else {
-                // Directly move uploaded file if it's already JPEG or PNG
+                // ย้ายไฟล์ที่อัปโหลดไปยังโฟลเดอร์เป้าหมาย
                 if (move_uploaded_file($_FILES["profile_image"]["tmp_name"], $target_file)) {
                     $message = "อัปโหลดไฟล์เรียบร้อยแล้ว";
 
-                    // Update database with new profile image path
+                    // อัปเดตฐานข้อมูลด้วยเส้นทางรูปโปรไฟล์ใหม่
                     $sql = "UPDATE users SET profile_image = ? WHERE id = ?";
                     $stmt = $conn->prepare($sql);
                     $stmt->bind_param("si", $target_file, $user_id);
 
                     if ($stmt->execute()) {
-                        // Profile updated successfully
+                        // อัปเดตโปรไฟล์สำเร็จ
                         $message .= " อัปเดตโปรไฟล์เรียบร้อยแล้ว!";
                         echo "<script>
                                 alert('$message');
                                 window.location.href = 'profile.php';
                               </script>";
-                        exit; // Ensure no further output
+                        exit; // ให้แน่ใจว่าไม่มีการส่งออกเพิ่มเติม
                     } else {
-                        // Error updating profile
+                        // ข้อผิดพลาดในการอัปเดตโปรไฟล์
                         $message .= " ข้อผิดพลาด: " . $sql . "<br>" . $conn->error;
                     }
 
                     $stmt->close();
                 } else {
-                    $message = "ขออภัย เกิดข้อผิดพลาดในการอัปโหลดไฟล์ของคุณ";
+                    $message = "ขออภัย เกิดข้อผิดพลาดในการย้ายไฟล์ของคุณ";
                 }
             }
         } else {
