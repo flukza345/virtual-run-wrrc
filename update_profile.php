@@ -12,52 +12,61 @@ $message = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["profile_image"])) {
     $user_id = $_SESSION['user_id'];
 
-    // ตรวจสอบว่าไฟล์ถูกอัปโหลดหรือไม่
-    if ($_FILES["profile_image"]["error"] != UPLOAD_ERR_OK) {
-        $message = "มีข้อผิดพลาดในการอัปโหลดไฟล์: " . $_FILES["profile_image"]["error"];
-    } else {
-        // Upload profile image
-        $target_dir = "uploads/profiles/";
-        $target_file = $target_dir . basename($_FILES["profile_image"]["name"]);
-        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+    // Upload profile image
+    $target_dir = "uploads/profiles/";
+    $target_file = $target_dir . basename($_FILES["profile_image"]["name"]);
+    $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
 
-        // ตรวจสอบว่าเป็นไฟล์รูปภาพหรือไม่
-        $check = getimagesize($_FILES["profile_image"]["tmp_name"]);
-        if ($check !== false) {
-            // อนุญาตเฉพาะไฟล์ JPG, JPEG, PNG
-            if ($imageFileType != "jpg" && $imageFileType != "jpeg" && $imageFileType != "png") {
-                $message = "ขออภัย อนุญาตเฉพาะไฟล์ JPG, JPEG, PNG เท่านั้น";
-            } else {
-                // ย้ายไฟล์ที่อัปโหลดไปยังโฟลเดอร์เป้าหมาย
-                if (move_uploaded_file($_FILES["profile_image"]["tmp_name"], $target_file)) {
-                    $message = "อัปโหลดไฟล์เรียบร้อยแล้ว";
-
-                    // อัปเดตฐานข้อมูลด้วยเส้นทางรูปโปรไฟล์ใหม่
-                    $sql = "UPDATE users SET profile_image = ? WHERE id = ?";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("si", $target_file, $user_id);
-
-                    if ($stmt->execute()) {
-                        // อัปเดตโปรไฟล์สำเร็จ
-                        $message .= " อัปเดตโปรไฟล์เรียบร้อยแล้ว!";
-                        echo "<script>
-                                alert('$message');
-                                window.location.href = 'profile.php';
-                              </script>";
-                        exit; // ให้แน่ใจว่าไม่มีการส่งออกเพิ่มเติม
-                    } else {
-                        // ข้อผิดพลาดในการอัปเดตโปรไฟล์
-                        $message .= " ข้อผิดพลาด: " . $sql . "<br>" . $conn->error;
-                    }
-
-                    $stmt->close();
-                } else {
-                    $message = "ขออภัย เกิดข้อผิดพลาดในการย้ายไฟล์ของคุณ";
-                }
-            }
+    // Check if image file is a actual image or fake image
+    $check = getimagesize($_FILES["profile_image"]["tmp_name"]);
+    if($check !== false) {
+        // Allow certain file formats
+        if ($imageFileType != "jpg" && $imageFileType != "jpeg" && $imageFileType != "png") {
+            $message = "Sorry, only JPG, JPEG, PNG files are allowed.";
         } else {
-            $message = "ไฟล์ไม่ใช่รูปภาพ";
+            // Convert HEIC to JPEG if the uploaded file is HEIC
+            if ($imageFileType == "heic" || $imageFileType == "heif") {
+                // Use Imagick to convert HEIC/HEIF to JPEG
+                $imagick = new Imagick($_FILES["profile_image"]["tmp_name"]);
+                $imagick->setImageFormat("jpeg");
+
+                // Save the converted JPEG file
+                $target_file = $target_dir . uniqid() . ".jpg";
+                if ($imagick->writeImage($target_file)) {
+                    // Successfully converted and saved as JPEG
+                    $message = "File is converted and uploaded successfully.";
+                } else {
+                    // Failed to convert
+                    $message = "Sorry, there was an error converting your file.";
+                }
+            } else {
+                // Directly move uploaded file if it's already JPEG or PNG
+                move_uploaded_file($_FILES["profile_image"]["tmp_name"], $target_file);
+                $message = "File is uploaded successfully.";
+            }
+
+            // Update database with new profile image path
+            $sql = "UPDATE users SET profile_image = ? WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("si", $target_file, $user_id);
+
+            if ($stmt->execute()) {
+                // Profile updated successfully
+                $message .= " Profile updated successfully!";
+                echo "<script>
+                        alert('$message');
+                        window.location.href = 'profile.php';
+                      </script>";
+                exit; // Ensure no further output
+            } else {
+                // Error updating profile
+                $message .= " Error: " . $sql . "<br>" . $conn->error;
+            }
+
+            $stmt->close();
         }
+    } else {
+        $message = "File is not an image.";
     }
 }
 ?>
