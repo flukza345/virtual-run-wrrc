@@ -8,6 +8,37 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+// ฟังก์ชันสำหรับการส่งการแจ้งเตือนไปยัง LINE
+function sendLineNotify($message, $image_path) {
+    $access_token = 'Tb8ahI7AiCzmf52vNGTLedoF6T1WeF9Lm9shKB7U2qG'; // แทนที่ด้วย Access Token ของคุณ
+    $api_url = 'https://notify-api.line.me/api/notify';
+
+    $data = array('message' => $message);
+    $headers = array(
+        'Content-Type: multipart/form-data',
+        'Authorization: Bearer ' . $access_token
+    );
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $api_url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SAFE_UPLOAD, true);
+
+    // เพิ่มรูปภาพถ้ามี
+    if ($image_path && file_exists($image_path)) {
+        $data['imageFile'] = new CURLFile($image_path);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    }
+
+    $result = curl_exec($ch);
+    curl_close($ch);
+
+    return $result;
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user_id = $_SESSION['user_id'];
     $distance = $_POST['distance'];
@@ -54,12 +85,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $approved = 0;
 
     // Prepare and execute SQL statement to insert run data into database
-$sql = "INSERT INTO runs (user_id, distance, image_path, approved) VALUES (?, ?, ?, ?)";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("idsi", $user_id, $distance, $target_file, $approved);
-
+    $sql = "INSERT INTO runs (user_id, distance, image_path, approved) VALUES (?, ?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("idsi", $user_id, $distance, $target_file, $approved);
 
     if ($stmt->execute()) {
+        // ดึงชื่อผู้ใช้จากฐานข้อมูล
+        $user_sql = "SELECT name FROM users WHERE id = ?";
+        $user_stmt = $conn->prepare($user_sql);
+        $user_stmt->bind_param("i", $user_id);
+        $user_stmt->execute();
+        $user_result = $user_stmt->get_result();
+        $user = $user_result->fetch_assoc();
+        $user_name = $user['name'];
+
+        // สร้างข้อความแจ้งเตือน
+        $message = "ชื่อ: $user_name\nระยะทาง: $distance กิโลเมตร\nสถานะ: รออนุมัติ";
+        sendLineNotify($message, $target_file);
+
         echo "<script>alert('!!..ส่งผลการวิ่งสำเร็จ รอแอดมิน อนุมัติผล..!!'); window.location.href='index.php';</script>";
     } else {
         echo "Error: " . $sql . "<br>" . $conn->error;
@@ -151,11 +194,10 @@ $stmt->bind_param("idsi", $user_id, $distance, $target_file, $approved);
     <div class="container">
         <h1>ส่งผลการวิ่ง</h1>
         <form method="post" action="" enctype="multipart/form-data">
-    ระยะ (กิโลเมตร): <input type="text" name="distance" required><br>
-    รูปภาพอ้างอิง: <input type="file" name="image" required><br>
-    <input type="submit" value="ส่งผล">
-</form>
-
+            ระยะ (กิโลเมตร): <input type="text" name="distance" required><br>
+            รูปภาพอ้างอิง: <input type="file" name="image" required><br>
+            <input type="submit" value="ส่งผล">
+        </form>
     </div>
 </body>
 </html>
