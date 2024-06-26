@@ -19,51 +19,37 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["profile_image"])) {
 
     // Check if image file is a actual image or fake image
     $check = getimagesize($_FILES["profile_image"]["tmp_name"]);
-    if($check !== false) {
+    if ($check !== false) {
         // Allow certain file formats
         if ($imageFileType != "jpg" && $imageFileType != "jpeg" && $imageFileType != "png") {
             $message = "Sorry, only JPG, JPEG, PNG files are allowed.";
         } else {
-            // Convert HEIC to JPEG if the uploaded file is HEIC
-            if ($imageFileType == "heic" || $imageFileType == "heif") {
-                // Use Imagick to convert HEIC/HEIF to JPEG
-                $imagick = new Imagick($_FILES["profile_image"]["tmp_name"]);
-                $imagick->setImageFormat("jpeg");
-
-                // Save the converted JPEG file
-                $target_file = $target_dir . uniqid() . ".jpg";
-                if ($imagick->writeImage($target_file)) {
-                    // Successfully converted and saved as JPEG
-                    $message = "File is converted and uploaded successfully.";
-                } else {
-                    // Failed to convert
-                    $message = "Sorry, there was an error converting your file.";
-                }
-            } else {
-                // Directly move uploaded file if it's already JPEG or PNG
-                move_uploaded_file($_FILES["profile_image"]["tmp_name"], $target_file);
+            // Directly move uploaded file if it's already JPEG or PNG
+            if (move_uploaded_file($_FILES["profile_image"]["tmp_name"], $target_file)) {
                 $message = "File is uploaded successfully.";
-            }
 
-            // Update database with new profile image path
-            $sql = "UPDATE users SET profile_image = ? WHERE id = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("si", $target_file, $user_id);
+                // Update database with new profile image path
+                $sql = "UPDATE users SET profile_image = ? WHERE id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("si", $target_file, $user_id);
 
-            if ($stmt->execute()) {
-                // Profile updated successfully
-                $message .= " Profile updated successfully!";
-                echo "<script>
-                        alert('$message');
-                        window.location.href = 'profile.php';
-                      </script>";
-                exit; // Ensure no further output
+                if ($stmt->execute()) {
+                    // Profile updated successfully
+                    $message .= " Profile updated successfully!";
+                    echo "<script>
+                            alert('$message');
+                            window.location.href = 'profile.php';
+                          </script>";
+                    exit; // Ensure no further output
+                } else {
+                    // Error updating profile
+                    $message .= " Error: " . $sql . "<br>" . $conn->error;
+                }
+
+                $stmt->close();
             } else {
-                // Error updating profile
-                $message .= " Error: " . $sql . "<br>" . $conn->error;
+                $message = "Sorry, there was an error uploading your file.";
             }
-
-            $stmt->close();
         }
     } else {
         $message = "File is not an image.";
