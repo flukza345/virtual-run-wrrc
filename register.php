@@ -171,7 +171,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             ชื่อผู้ใช้: <input type="text" name="username" required><br>
             รหัสผ่าน: <input type="password" name="password" required><br>
             ยืนยันรหัสผ่าน: <input type="password" name="confirm_password" required><br>
-            รูปภาพ: <input type="file" name="profile_image"><br>
+            รูปภาพ: <input type="file" name="profile_image" required><br>
             <input type="submit" value="ลงทะเบียน">
         </form>
     </div>
