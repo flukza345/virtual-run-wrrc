@@ -250,7 +250,9 @@ $result_runs = $stmt_runs->get_result();
 <body>
     <div class="navbar">
         <a href="index.php" class="navbar-item">หน้าแรก</a>
+        <a href="admin_panel.php" class="navbar-item active">admin Panel</a>
         <a href="add_distance.php" class="navbar-item active">ส่งระยะให้กับ</a>
+        <a href="admin_users.php" class="navbar-item active">ข้อมูล users</a>
         <a href="logout.php" class="navbar-item">Logout</a>
     </div>
     <div class="container">
