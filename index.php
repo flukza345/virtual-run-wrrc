@@ -38,7 +38,8 @@ if (isset($_SESSION['user_id'])) {
 } else {
     $navbar_links = '<a href="index.php" class="navbar-item">หน้าแรก</a>';
     $navbar_links .= '<a href="register.php" class="navbar-item">ลงทะเบียน</a>'; // เพิ่มลิงก์สำหรับ Register
-    $logout_button = '<a href="javascript:void(0)" onclick="document.getElementById(\'loginModal\').style.display=\'block\'" class="navbar-item">เข้าสู่ระบบ</a>';
+    $logout_button = '<a href="javascript:void(0)" onclick="document.getElementById(\'loginModal\').style.display=\'block\'" class="navbar-item">เข้าสู่ระบบ</a>
+                      <a href="javascript:void(0)" onclick="document.getElementById(\'resetPasswordModal\').style.display=\'block\'" class="navbar-item">ลืมรหัสผ่าน</a>';
 }
 ?>
 
@@ -284,6 +285,22 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </div>
 
+    <!-- Reset Password Modal -->
+    <div id="resetPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('resetPasswordModal').style.display='none'">&times;</span>
+            <form method="post" action="reset_password.php">
+                <label for="reset_username">ชื่อผู้ใช้:</label>
+                <input type="text" id="reset_username" name="reset_username" required>
+                <label for="new_password">รหัสผ่านใหม่:</label>
+                <input type="password" id="new_password" name="new_password" required>
+                <label for="confirm_password">ยืนยันรหัสผ่านใหม่:</label>
+                <input type="password" id="confirm_password" name="confirm_password" required>
+                <input type="submit" value="เปลี่ยนรหัสผ่าน">
+            </form>
+        </div>
+    </div>
+
     <script>
         function toggleMenu() {
             var menuItems = document.getElementById('menuItems');
@@ -292,9 +309,13 @@ if (isset($_SESSION['user_id'])) {
 
         // Close the modal when clicking outside of it
         window.onclick = function(event) {
-            var modal = document.getElementById('loginModal');
-            if (event.target == modal) {
-                modal.style.display = "none";
+            var loginModal = document.getElementById('loginModal');
+            var resetPasswordModal = document.getElementById('resetPasswordModal');
+            if (event.target == loginModal) {
+                loginModal.style.display = "none";
+            }
+            if (event.target == resetPasswordModal) {
+                resetPasswordModal.style.display = "none";
             }
         }
     </script>
